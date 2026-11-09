@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>PCLT-BC · Breast Cancer Recurrence Risk Calculator</title>
+  <meta name="description" content="A research calculator for 3- and 5-year breast cancer recurrence probabilities using a frozen random survival forest model. All calculations run in your browser.">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script defer src="model.js"></script>
+  <script defer src="engine.js"></script>
+  <script defer src="config.js"></script>
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <header class="topbar"><div class="topbar-inner">
+    <a class="brand" href="#main" aria-label="PCLT-BC home"><img src="icon.svg" alt="" width="32" height="32"><span><b>PCLT-BC</b></span></a>
+    <div class="top-actions"><span class="research-tag" data-i18n="research">RESEARCH TOOL</span></div>
+  </div></header>
+  <main id="main" class="page">
+    <section class="intro">
+      <p class="eyebrow">RANDOM SURVIVAL FOREST</p>
+      <h1 data-i18n="title">Breast cancer recurrence risk</h1>
+      <p class="subtitle" data-i18n="subtitle">Enter 7 predictors to estimate the probability of recurrence within 3 and 5 years.</p>
+      <div class="privacy-line"><span class="privacy-dot" aria-hidden="true"></span><span data-i18n="privacy">Calculated in your browser. Your inputs are not uploaded or saved.</span></div>
+    </section>
+    <div class="calculator-grid">
+      <section class="form-panel" aria-labelledby="input-heading">
+        <div class="panel-header"><h2 id="input-heading" data-i18n="inputs">Model inputs</h2><span class="subtle" data-i18n="required">All fields required</span></div>
+        <form id="calculator" novalidate autocomplete="off">
+          <fieldset><legend><span class="step">01</span><span data-i18n="pathology">Clinicopathological features</span></legend>
+            <div class="pathology-grid">
+              <div class="field"><label for="grade" data-i18n="grade">Histological grade</label><select id="grade" name="Histological grade" required aria-describedby="grade-error"><option value="" data-i18n="choose">Select</option><option value="1">Grade I</option><option value="2">Grade II</option><option value="3">Grade III</option></select><span class="field-error" id="grade-error"></span></div>
+              <div class="field"><label for="tnm" data-i18n="tnm">TNM stage</label><select id="tnm" name="TNM" required aria-describedby="tnm-error"><option value="" data-i18n="choose">Select</option><option value="0" data-i18n="stage0">Stage 0</option><option value="1" data-i18n="stage1">Stage I</option><option value="2" data-i18n="stage2">Stage II</option><option value="3" data-i18n="stage3">Stage III</option></select><span class="field-error" id="tnm-error"></span></div>
+              <div class="field"><label for="lvi" data-i18n="lvi">LVI</label><select id="lvi" name="LVI" required aria-describedby="lvi-error"><option value="" data-i18n="choose">Select</option><option value="0" data-i18n="absent">Absent (0)</option><option value="1" data-i18n="present">Present (1)</option></select><span class="field-error" id="lvi-error"></span></div>
+            </div>
+            <p class="pathology-hint" data-i18n="lviHint">LVI: lymphovascular invasion in the primary breast tumor.</p>
+          </fieldset>
+          <fieldset class="laboratory"><legend><span class="step">02</span><span data-i18n="laboratory">Laboratory markers</span></legend>
+            <div class="lab-grid">
+              <div class="field"><label for="fib"><strong>FIB</strong><span data-i18n="fib">Fibrinogen</span></label><div class="input-wrap"><input id="fib" name="FIB" type="number" inputmode="decimal" min="0" step="any" required aria-describedby="fib-unit fib-error"><span class="unit" id="fib-unit" data-unit="FIB"></span></div><span class="field-error" id="fib-error"></span></div>
+              <div class="field"><label for="ca153"><strong>CA15-3</strong><span data-i18n="ca153">Cancer antigen 15-3</span></label><div class="input-wrap"><input id="ca153" name="CA153" type="number" inputmode="decimal" min="0" step="any" required aria-describedby="ca153-unit ca153-error"><span class="unit" id="ca153-unit" data-unit="CA153"></span></div><span class="field-error" id="ca153-error"></span></div>
+              <div class="field"><label for="tg"><strong>TG</strong><span data-i18n="tg">Triglycerides</span></label><div class="input-wrap"><input id="tg" name="TG" type="number" inputmode="decimal" min="0" step="any" required aria-describedby="tg-unit tg-error"><span class="unit" id="tg-unit" data-unit="TG"></span></div><span class="field-error" id="tg-error"></span></div>
+              <div class="field"><label for="nefa"><strong>NEFA</strong><span data-i18n="nefa">Free fatty acids</span></label><div class="input-wrap"><input id="nefa" name="NEFA" type="number" inputmode="decimal" min="0" step="any" required aria-describedby="nefa-unit nefa-error"><span class="unit" id="nefa-unit" data-unit="NEFA"></span></div><span class="field-error" id="nefa-error"></span></div>
+            </div>
+            <p class="form-hint" data-i18n="labHint">Use the model’s laboratory units. Do not enter 0 for a missing value.</p>
+          </fieldset>
+          <div id="form-message" class="form-message" role="alert"></div>
+          <div class="form-actions"><button class="primary" type="submit"><span data-i18n="calculate">Calculate risk</span><span aria-hidden="true">→</span></button><button class="reset" type="reset" data-i18n="clear">Clear</button></div>
+        </form>
+      </section>
+      <aside class="results-panel" aria-labelledby="results-heading">
+        <div class="result-top"><span class="eyebrow" data-i18n="estimates">MODEL ESTIMATES</span><span class="model-tag">RSF</span></div>
+        <h2 id="results-heading" data-i18n="results">Recurrence probability</h2>
+        <p class="results-intro" id="result-status" aria-live="polite" data-i18n="empty">Complete the inputs to see your model estimates here.</p>
+        <div class="result-cards" id="result-numbers" aria-live="polite" aria-atomic="true">
+          <div class="risk-card"><span class="horizon" data-i18n="year3">Within 3 years</span><div class="probability"><span id="p3">—</span><span class="percent">%</span></div><div class="risk-track" aria-hidden="true"><div id="bar3"></div></div><span class="risk-caption" data-i18n="probability">Predicted recurrence</span></div>
+          <div class="risk-card"><span class="horizon" data-i18n="year5">Within 5 years</span><div class="probability"><span id="p5">—</span><span class="percent">%</span></div><div class="risk-track" aria-hidden="true"><div id="bar5"></div></div><span class="risk-caption" data-i18n="probability">Predicted recurrence</span></div>
+        </div>
+        <div id="range-warning" class="range-warning" hidden></div>
+        <p class="interpretation" data-i18n="interpretation">These are model estimates, not a certainty that recurrence will or will not occur.</p>
+        <div class="research-note"><span class="note-icon" aria-hidden="true">i</span><p data-i18n="disclaimer">For research and model demonstration only. Not a substitute for clinical assessment or a standalone basis for care.</p></div>
+      </aside>
+    </div>
+    <section class="information" aria-label="Model information">
+      <details><summary data-i18n="about">About the model &amp; intended use</summary><div class="details-body"><p data-i18n="aboutText">This tool uses the frozen A46 random survival forest (200 trees) to estimate recurrence probabilities at 36 and 60 months. It preserves the original preprocessing and predictions, without retraining or adjusting baseline risk.</p><p data-i18n="scope">The model was developed in a female breast cancer research cohort. Inputs are limited to TNM stages 0–III. Imputed data were used during development. These are research estimates; interpretation requires the study methods, limitations, and intended population.</p><p data-i18n="rangesIntro">The observed laboratory ranges in the development training set are listed below. These describe data coverage, not laboratory reference intervals. Values outside these ranges trigger a notice and are never silently clipped.</p><dl class="range-list"><div><dt>FIB</dt><dd>1.39–4.81</dd></div><div><dt>CA15-3</dt><dd>2.2–191.5</dd></div><div><dt>TG</dt><dd>0.31–4.77</dd></div><div><dt>NEFA</dt><dd>0.10–1.60</dd></div></dl></div></details>
+      <details><summary data-i18n="privacyHeading">Data &amp; privacy</summary><div class="details-body"><p data-i18n="privacyText">Do not enter names, hospital identifiers, or other identifying information. Values are used only for calculations in the current page. They are not uploaded, written to a database or local storage, or included in the URL. No analytics scripts are used. The hosting provider may keep standard web access logs; these do not contain the predictor values entered here.</p></div></details>
+    </section>
+    <footer><span>PCLT-BC</span><span>A46 · RSF · 2026.11</span></footer>
+  </main>
+  <noscript><div class="noscript">Enable JavaScript to calculate predictions locally in your browser.</div></noscript>
+</body>
+</html>
